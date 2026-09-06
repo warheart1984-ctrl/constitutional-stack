@@ -54,34 +54,63 @@ The prototype demonstrates **numeric existence proofs** for each layer's core co
 
 ---
 
-## Voss Binding Map — What's Implemented vs Missing
+## Voss Binding Map — Stack vs Swarm Law 7.2
 
 The Voss Binding (AAIS-VB-Λ-001) is a **constitution** (AAIS). The ARIS Cycle Operator (ARIS-OP-Λ-001) is a **cycle-boundary operator** (ARIS). They are different documents with different IDs. See `docs/VB_LAMBDA_ENACTMENT_SPEC.md`.
 
-| Binding Primitive | Enactment Spec (§) | Stack Layer | Implemented in This Repo? |
-|-------------------|-------------------|-------------|---------------------------|
-| **Λ.1–Λ.7 Laws** | §2 Seven Laws | **L6** Audit Protocol | ⚠️ 7 CIEMS ≠ Λ.1–Λ.7 (no published bijection) |
-| **GRE Pipeline** | §4.1 GRE | **L7** Reflexive Runtime | ⚠️ Pipeline stages exist; no singleton enforcer |
-| **Circuit Breaker** | §4.2 | **L7** Runtime | ⚠️ System-level only; no per-module registry |
-| **Message Bus** | §4.2 | **L8** Field Ecology | ❌ Missing — continuum PDEs only |
-| **Contract Registry** | §4.3 + §8 | **L9** Unified | ❌ Design-time matrix; no runtime registration |
-| **Module Lifecycle** | §4.4 | **L7** Runtime | ❌ Missing REG→INIT→ACT→OP→SUSP→TERM |
-| **Kill Switch** | §6 | **L7** Runtime | ⚠️ Exists; not wired to GRE |
-| **Identity Leak Detector** | §4.2 | **L8** Field Ecology | ❌ Missing — continuum only |
-| **Drift 4-Vector** | §3 Drift | **L8** Field Ecology | ⚠️ PDEs exist; no estimator wired to drift |
-| **Δ-Op (Recovery)** | §4 Δ-Op | **L7** Runtime | ⚠️ ΔL<0 is monitor; no signed Operator authorization |
-| **ARIS Cycle Operator** | §5 ARIS-OP-Λ | **Missing** | ❌ Not in 9 layers |
-| **Δ as Only Recovery** | §4 Δ-Op | **L7** | ❌ Lyapunov decrease ≠ Operator authorization |
-| **Conformance Objects** | §6 | **L9** | ⚠️ Design-time matrix; no runtime registry |
+The table below maps each Voss Binding primitive to: the enactment spec section, the stack layer, the prototype's implementation status, and **what exists in Swarm Law 7.2** (`/home/jon/swarmlaw-gov-v2`). The Swarm Law 7.2 codebase (`crates/governor/`, `crates/governor/src/`, `crates/merkle-audit/`, `crates/gateway/`) is a **working enactment** further along the plane.
 
-**Key Architectural Gaps:**
+| Binding Primitive | Enactment Spec (§) | Stack Layer | This Repo | Swarm Law 7.2 (crates/governor, merkle-audit, gateway) |
+|-------------------|-------------------|-------------|-----------|--------------------------------------------------------|
+| **Λ.1–Λ.7 Laws** | §2 Seven Laws | **L6** Audit | ⚠️ 7 CIEMS ≠ Λ.1–Λ.7 | **`policy.rs`** = `Policy::validate()` enforces Λ.1–Λ.7; `law_gate()` is the singleton |
+| **GRE Pipeline** | §4.1 GRE | **L7** Runtime | ⚠️ Pipeline stages; no singleton | **`Governor`** = `evaluate()` = full 6-stage pipeline; `law_gate()` is the singleton enforcer |
+| **Circuit Breaker** | §4.2 | **L7** Runtime | ⚠️ System-level only; no per-module registry | **`ReplayGuard`** = Redis SET NX/PX + `noeviction` check; LWT claim in Scylla = durable replay authority |
+| **Message Bus** | §4.2 | **L8** Field | ❌ Missing | ❌ Missing — direct gRPC only; no schema-validated bus / identity leak detector |
+| **Contract Registry** | §4.3 + §8 | **L9** Unified | ❌ Design-time matrix | ❌ Hardcoded `policy.rs::Policy::local()`; no runtime registration/versioning |
+| **Module Lifecycle** | §4.4 | **L7** Runtime | ❌ Missing | ❌ Not implemented; `Governor` lifecycle is implicit |
+| **Kill Switch** | §6 | **L7** Runtime | ⚠️ Exists; unwired | ⚠️ **CompensationService** exists; returns `failed_precondition`; no kill switch |
+| **Identity Leak Detector** | §4.2 | **L8** Field | ❌ Missing | ❌ Not implemented as continuous background process |
+| **Drift 4-Vector** | §3 Drift | **L8** Field | ⚠️ PDEs; no estimator | ⚠️ Not explicit; risk scoring in `policy.rs` + evidence risk levels |
+| **Δ-Op (Recovery)** | §4 Δ-Op | **L7** Runtime | ❌ Lyapunov ≠ Δ-Op | ❌ CompensationService returns `failed_precondition`; no signed Δ-Op |
+| **ARIS Cycle Operator** | §5 ARIS-OP-Λ | **Missing** | ❌ Missing | ❌ Not present |
+| **Δ as Only Recovery** | §4 Δ-Op | **L7** | ❌ Lyapunov ≠ Δ-Op | ❌ No Δ-Op; `Governor` evaluates → approves/denies |
+| **Conformance Objects** | §6 | **L9** | ⚠️ Design-time matrix | ⚠️ `merkle-audit` = audit chain worker; no conformance object |
 
-1. **L6 "7 CIEMS" ≠ Λ.1–Λ.7** — No published bijection. Two constitutions risk.
-2. **L7 "Autopoietic" + ΔL<0 = Self-healing** — **VB-Λ forbids autonomous correction** (Λ.3, Λ.6). Lyapunov decrease is a **monitor**, not a license to self-edit. Δ-Op requires signed Operator authorization.
-3. **L8 Field Ecology ≠ Message Bus / Identity Leak Detector** — Continuum PDEs ≠ schema-validated Message Bus + Identity Leak Detector.
-4. **L9 Conformance Matrix = Design-time** — VB-Λ §4.3 Contract Registry is **runtime** registration/versioning. Γ:L9→L1 is not a substitute for registration.
-5. **ARIS Cycle Operator Missing** — Post-Δ merge operator (ARIS-OP-Λ-001) not in 9 layers.
-5. **Layer Compression** — L1–L3 = one continuity story; L4–L5 = one duality story; L6–L7 = governance runtime; L8 = field metaphor; L9 = packaging. Closer to 5 working layers + 2 essays.
+**Key Architectural Gaps (Both Sides):**
+
+| Gap | Stack Repo | Swarm Law 7.2 |
+|-----|------------|---------------|
+| **Λ.1–Λ.7 bijection** | 7 CIEMS ≠ Λ.1–Λ.7 | `policy.rs` enforces laws but no published bijection |
+| **Singleton GRE** | Pipeline stages; no singleton | `Governor::connect()` = singleton; `law_gate()` is the enforcer |
+| **Circuit Breaker** | System-level only | `ReplayGuard` (Redis SET NX/PX) + Scylla LWT = dual-layer |
+| **Message Bus** | ❌ Missing | ❌ Missing — direct gRPC only |
+| **Contract Registry** | Design-time matrix | Hardcoded `policy.rs::Policy::local()`; no runtime registration |
+| **Module Lifecycle** | ❌ Missing | Not implemented |
+| **Kill Switch** | Exists; unwired | ❌ CompensationService only; returns `failed_precondition` |
+| **Identity Leak Detector** | ❌ Missing | ❌ Not implemented |
+| **Drift 4-Vector** | PDEs; no estimator | Risk scoring in `policy.rs` + evidence risk levels |
+| **Δ-Op** | Lyapunov ≠ Δ-Op | CompensationService returns `failed_precondition` |
+| **ARIS Cycle Operator** | ❌ Missing | Not present |
+| **Conformance Objects** | Design-time matrix | `merkle-audit` = audit chain worker |
+
+---
+
+## Status Line
+
+**Constitution: ratified. Enactment in this repo: partial. Enactment in Swarm Law 7.2: further along the plane. Physical/field claims: open.**
+
+---
+
+## Priority Work Order (If the Map Is the Work Order)
+
+Do not start with Message Bus or Field estimators.
+
+1. **Published Λ ↔ CIEMS bijection** (one page — L6 ↔ §2)
+2. **Singleton GRE**: no `execute()` except through it (L7 → §4.1)
+3. **Runtime Contract Registry** (even dict + version) — L9 → §4.3 + §8
+4. **Kill Switch wired into that GRE** (L7 → §6)
+5. **Δ-Op = signed Operator record**, or it does not unlock (swarm recovery lesson) — L7 → §4 Δ-Op
+6. **Then**: Message Bus / Identity Leak Detector / Cycle Operator
 
 ---
 
@@ -123,7 +152,8 @@ constitutional_stack/
         │   └── __init__.py (param spaces)
         ├── red_team/
         │   ├── test_layer1_adversarial.py
-        │   └── test_layer6_adversarial.py
+        │   ├── test_layer6_adversarial.py
+        │   └── test_runtime_voss_binding.py
         ├── alternative_models/
         ├── stress_scenarios/
         ├── independent_reproduction/
@@ -150,6 +180,7 @@ python -m constitutional_stack.tests.test_layers_8_9
 # Adversarial / Red Team (requires full stack wired)
 # python -m constitutional_stack.adversarial.red_team.test_layer1_adversarial
 # python -m constitutional_stack.adversarial.red_team.test_layer6_adversarial
+# python -m constitutional_stack.adversarial.red_team.test_runtime_voss_binding
 ```
 
 **Expected output:** `ALL HYPOTHESES PASSED: True` (for numeric checks that exist).
